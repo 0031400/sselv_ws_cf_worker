@@ -4,12 +4,15 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "vless",
+	"name": "v_ws",
 	"main": "src/index.ts",
-	"compatibility_date": "2025-11-01",
+	"compatibility_date": "2024-09-23",
 	"observability": {
 		"enabled": true
-	}
+	},
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
