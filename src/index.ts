@@ -11,11 +11,14 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 import { connect } from 'cloudflare:sockets';
+export interface Env {
+	UUID: string
+	PATH: string
+}
 export default {
-
-	async fetch(request, env, ctx): Promise<Response> {
-		const uuid = '04e5d30d-7ccb-49b3-ad5f-4b07d45d8dfd'.replaceAll('-', '')
-		const path = '/04e5d30d'
+	async fetch(request, env: Env, ctx): Promise<Response> {
+		const uuid = env.UUID.replaceAll('-', '')
+		const path = env.PATH
 		if (new URL(request.url).pathname != path || request.headers.get('Upgrade') != 'websocket') {
 			return new Response('Hello World!');
 		}
@@ -65,6 +68,7 @@ export default {
 				switch (addrType) {
 					case 1:
 						addr = `${a[0]}.${a[1]}.${a[2]}.${a[3]}`
+						a = a.subarray(4)
 						break;
 					case 2:
 						const domainLen = a[0]
@@ -72,6 +76,12 @@ export default {
 						const domainArray = a.subarray(0, domainLen)
 						a = a.subarray(domainLen)
 						addr = String.fromCharCode(...domainArray)
+						break;
+					case 3:
+						addr = Array.from({ length: 8 }, (_, i) => {
+							(a[i * 2] << 8 | a[i * 2 + 1]).toString(16).padStart(4, '0')
+						}).join(':')
+						a = a.subarray(16)
 						break;
 					default:
 						server.close()
@@ -83,7 +93,7 @@ export default {
 				writer = socket.writable.getWriter()
 				reader = socket.readable.getReader()
 				has = true
-				one(reader, server)
+				readFromTarget(reader, server)
 				writer!.write(a.buffer.slice(a.byteOffset, a.byteLength + a.byteOffset))
 			} else {
 				await writer!.write(d.data)
@@ -96,16 +106,10 @@ export default {
 		return new Response(null, { status: 101, webSocket: client })
 	},
 } satisfies ExportedHandler<Env>;
-async function one(reader: ReadableStreamDefaultReader | null, server: WebSocket) {
-	try {
-		while (true) {
-			const { done, value } = await reader!.read()
-			if (done) {
-				break
-			}
-			server.send(value.buffer.slice(value.byteOffset, value.byteLength + value.byteOffset))
-		}
-	} catch (err) {
-		console.log(err);
+async function readFromTarget(reader: ReadableStreamDefaultReader | null, server: WebSocket) {
+	while (true) {
+		const { done, value } = await reader!.read()
+		if (done) break
+		server.send(value.buffer.slice(value.byteOffset, value.byteLength + value.byteOffset))
 	}
 }
