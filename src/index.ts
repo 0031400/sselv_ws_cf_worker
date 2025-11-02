@@ -17,6 +17,7 @@ export interface Env {
 }
 export default {
 	async fetch(request, env: Env, ctx): Promise<Response> {
+		// get config from the env
 		const uuid = env.UUID.replaceAll('-', '')
 		const path = env.PATH
 		if (new URL(request.url).pathname != path || request.headers.get('Upgrade') != 'websocket') {
@@ -78,18 +79,22 @@ export default {
 						addr = String.fromCharCode(...domainArray)
 						break;
 					case 3:
-						addr = Array.from({ length: 8 }, (_, i) => {
+						addr = Array.from({ length: 8 }, (_, i) =>
 							(a[i * 2] << 8 | a[i * 2 + 1]).toString(16).padStart(4, '0')
-						}).join(':')
+						).join(':')
+						addr = '[' + addr + ']'
 						a = a.subarray(16)
 						break;
 					default:
+						console.log('addrType', addrType);
 						server.close()
 						return
 				}
 				server.send(new Uint8Array([ver, 0]).buffer)
 				console.log('connect', addr, port);
 				socket = connect({ hostname: addr, port: port })
+				console.log('socket', socket);
+
 				writer = socket.writable.getWriter()
 				reader = socket.readable.getReader()
 				has = true
