@@ -60,7 +60,7 @@ export default {
 		}
 		const [client, server] = Object.values(new WebSocketPair())
 		server.accept()
-		let socket: Socket | null = null, hasHandShake = false, ver = 0, addr = '', port = 0
+		let socket: Socket | null = null, writer: WritableStreamDefaultWriter | null = null, hasHandShake = false, ver = 0, addr = '', port = 0
 		server.addEventListener('error', (err) => {
 			socket?.close()
 			server.close()
@@ -74,7 +74,7 @@ export default {
 		server.addEventListener('message', async (d: { data: ArrayBuffer }) => {
 			// has hand shake
 			if (hasHandShake) {
-				server!.send(d.data)
+				writer!.write(d.data)
 				return
 			}
 			// start hand shake
@@ -128,9 +128,9 @@ export default {
 			socket = connect({ hostname: addr, port: port })
 			hasHandShake = true
 			const reader = socket.readable.getReader()
-			const writer = socket.writable.getWriter()
+			writer = socket.writable.getWriter()
 			readFromTarget(reader, server)
-			writer.write(getBuffer(read()))
+			writer!.write(getBuffer(read()))
 		})
 		return new Response(null, { status: 101, webSocket: client })
 	},
