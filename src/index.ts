@@ -64,7 +64,7 @@ export default {
 		server.addEventListener('error', (err) => {
 			socket?.close()
 			server.close()
-			console.log(err);
+			console.error(err);
 			return
 		})
 		server.addEventListener('close', () => {
@@ -81,19 +81,19 @@ export default {
 			const read = getReader(new Uint8Array(d.data))
 			ver = read(1)[0]
 			if (ver != 0) {
-				console.log('ver', ver);
+				console.error('ver', ver);
 				server.close()
 				return
 			}
 			const hisUUID = getUUID(read(16))
 			if (uuid != hisUUID) {
-				console.log('uuid', hisUUID);
+				console.error('uuid', hisUUID);
 				server.close()
 				return
 			}
 			const mLen = read(1)[0]
 			if (mLen != 0) {
-				console.log('mLen', mLen);
+				console.error('mLen', mLen);
 				server.close()
 				return
 			}
@@ -101,7 +101,7 @@ export default {
 			read(mLen)
 			const cmd = read(1)[0]
 			if (cmd != 1) {
-				console.log('cmd', cmd);
+				console.error('cmd', cmd);
 				server.close()
 				return
 			}
@@ -119,7 +119,7 @@ export default {
 					addr = parseIPV6(read(16))
 					break;
 				default:
-					console.log('addrType', addrType);
+					console.error('addrType', addrType);
 					server.close()
 					return
 			}
